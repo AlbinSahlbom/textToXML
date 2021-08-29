@@ -1,10 +1,18 @@
 import os
+from pathlib import Path
 from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
+from tkinter import filedialog
 import xml.etree.ElementTree as ET
 from xml.etree import ElementTree
 from xml.dom import minidom
+import shutil
+
+
+def check_or_create_folders():
+    Path("files").mkdir(exist_ok=True)
+    Path("converted_files").mkdir(exist_ok=True)
 
 
 def prettify(elem):
@@ -85,13 +93,28 @@ def update_list(folder: str, list_box: Listbox):
 def display_xml(event):
     selection = event.widget.curselection()
     xml_file = event.widget.get(selection)
-    xml = ET.parse("converted_files/"+xml_file)
+    xml = ET.parse("converted_files/" + xml_file)
     xml_str = ElementTree.tostring(xml.getroot(), 'utf-8')
     xml_file_text.config(state="normal")
     xml_file_text.delete("1.0", END)
     xml_file_text.insert(END, xml_str)
     xml_file_text.config(state="disabled")
 
+
+def add_files():
+    filetypes = (
+        ('text files', '*.txt'),
+        ('All files', '*.*')
+    )
+    file_path = filedialog.askopenfilename(initialdir="/", title="Select file to add to convert directory", filetypes=filetypes)
+    dest_path = os.path.dirname(__file__) + "/files/" + file_path.split("/")[-1]
+    print("Path: " + dest_path)
+    shutil.copyfile(file_path, dest_path)
+    update_list("files", convert_list_box)
+
+
+# Start of program
+check_or_create_folders()
 
 window = Tk()
 window.title("Text to XML")
@@ -102,7 +125,8 @@ my_notebook = ttk.Notebook(window)
 frame1 = Frame(my_notebook)
 convert_list_box = Listbox(frame1, selectmode=MULTIPLE)
 update_list("files", convert_list_box)
-btn = Button(frame1, text="Convert selected document", command=clicked)
+convert_selected_btn = Button(frame1, text="Convert selected document", command=clicked)
+add_files_btn = Button(frame1, text="Add text files to convert", command=add_files)
 
 frame2 = Frame(my_notebook)
 converted_list_box = Listbox(frame2)
@@ -117,7 +141,8 @@ my_notebook.grid(row=0, column=0, pady=15)
 # Tab 1
 frame1.grid(row=0, column=0)
 convert_list_box.grid(row=0, column=0)
-btn.grid(row=1, column=0)
+convert_selected_btn.grid(row=1, column=0)
+add_files_btn.grid(row=2, column=0)
 
 # Tab 2
 frame2.grid(row=0, column=0)
